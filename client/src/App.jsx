@@ -8,7 +8,6 @@ import WriteArticle from "./pages/WriteArticle";
 import BlogTitles from "./pages/BlogTitles";
 import GenerateImages from "./pages/GenerateImages";
 import RemoveBackground from "./pages/RemoveBackground";
-import RemoveObject from "./pages/RemoveObject";
 import ReviewResume from "./pages/ReviewResume";
 import Community from "./pages/Community";
 import AuthPage from "./pages/AuthPage";
@@ -20,7 +19,6 @@ const toolRoutes = [
   { path: "blog-titles", element: <BlogTitles /> },
   { path: "generate-images", element: <GenerateImages /> },
   { path: "remove-background", element: <RemoveBackground /> },
-  { path: "remove-object", element: <RemoveObject /> },
   { path: "review-resume", element: <ReviewResume /> },
   { path: "community", element: <Community /> },
 ];

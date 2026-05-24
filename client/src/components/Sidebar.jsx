@@ -5,7 +5,6 @@ import {
   House,
   Image,
   LogOut,
-  Scissors,
   SquarePen,
   Users,
   Sparkles,
@@ -46,12 +45,6 @@ const navItems = [
     to: "/ai/remove-background",
     label: "Remove Background",
     Icon: Eraser,
-  },
-
-  {
-    to: "/ai/remove-object",
-    label: "Remove Object",
-    Icon: Scissors,
   },
 
   {

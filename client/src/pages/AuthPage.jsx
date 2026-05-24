@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
-  CheckCircle2,
   Eraser,
   FileText,
   ImageIcon,
@@ -13,7 +12,6 @@ import {
   RotateCcw,
   Sparkles,
   User,
-  Users,
 } from "lucide-react";
 import { useAuth } from "../context/auth";
 
@@ -74,13 +72,7 @@ const workspaceHighlights = [
   { icon: FileText, label: "Write Articles", detail: "Generate structured long-form content" },
   { icon: Sparkles, label: "Name Blog Posts", detail: "Create catchy, searchable titles" },
   { icon: ImageIcon, label: "Generate Images", detail: "Turn prompts into shareable visuals" },
-  { icon: Eraser, label: "Edit Images", detail: "Remove backgrounds and unwanted objects" },
-];
-
-const savedItems = [
-  { type: "Draft", title: "AI article ready for the dashboard" },
-  { type: "Image", title: "Background removed for a product shot" },
-  { type: "Resume", title: "Review report with improvement tips" },
+  { icon: Eraser, label: "Edit Images", detail: "Remove image backgrounds cleanly" },
 ];
 
 const AuthInput = ({ icon, ...props }) => (
@@ -209,8 +201,6 @@ const AuthPage = () => {
               </div>
             ))}
           </div>
-
-          
         </aside>
 
         <div className="flex min-h-0 flex-col justify-center overflow-hidden p-5 sm:p-7">
