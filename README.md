@@ -119,7 +119,7 @@ GROQ_API_KEY=your_groq_api_key
 ## Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/Zenith-AI.git
+git clone https://github.com/riddhi191203/Zenith-AI.git
 cd Zenith-AI
 ```
 
