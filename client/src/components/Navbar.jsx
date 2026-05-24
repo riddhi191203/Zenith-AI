@@ -4,20 +4,18 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Sparkles,
+  LogOut,
 } from "lucide-react";
-
-import {
-  useClerk,
-  UserButton,
-  useUser,
-} from "@clerk/clerk-react";
+import { useAuth } from "../context/auth";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, logout, user } = useAuth();
 
-  const { user } = useUser();
-
-  const { openSignIn } = useClerk();
+  const logoutHandler = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <header
@@ -47,7 +45,6 @@ const Navbar = () => {
           py-4
         "
       >
-
         {/* Logo */}
         <div
           onClick={() => navigate("/")}
@@ -116,11 +113,11 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* User/Auth */}
-          {user ? (
+          {/* Auth Section */}
+          {isAuthenticated ? (
             <div className="flex items-center gap-3">
 
-              {/* User Badge */}
+              {/* Welcome Badge */}
               <div
                 className="
                   hidden
@@ -139,24 +136,52 @@ const Navbar = () => {
                 "
               >
                 <Sparkles className="w-4 h-4" />
-                Welcome back
+
+                Welcome,
+                {user?.name || "User"}
               </div>
 
-              {/* Clerk User */}
-              <div className="scale-110">
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox:
-                        "w-10 h-10 ring-2 ring-blue-200",
-                    },
-                  }}
-                />
+              {/* User Avatar */}
+              <div
+                className="
+                  w-10
+                  h-10
+                  rounded-full
+                  bg-gradient-to-r
+                  from-blue-600
+                  to-slate-700
+                  flex
+                  items-center
+                  justify-center
+                  text-white
+                  font-semibold
+                  uppercase
+                  shadow-md
+                "
+              >
+                {user?.name?.charAt(0)}
               </div>
+
+              {/* Logout */}
+              <button
+                onClick={logoutHandler}
+                className="
+                  p-2
+                  rounded-full
+                  bg-red-50
+                  border
+                  border-red-100
+                  text-red-500
+                  hover:bg-red-100
+                  transition
+                "
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           ) : (
             <button
-              onClick={openSignIn}
+              onClick={() => navigate("/login")}
               className="
                 group
                 flex

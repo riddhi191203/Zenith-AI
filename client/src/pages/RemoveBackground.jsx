@@ -1,8 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/clerk-react";
 import { Eraser, ImageIcon } from "lucide-react";
+import api from "../lib/api";
 import {
   Field,
   ImageResult,
@@ -11,14 +10,11 @@ import {
   UploadBox,
 } from "../components/ToolWorkspace";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
-
 const RemoveBackground = () => {
   const [input, setInput] = useState(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
-  const { getToken } = useAuth();
 
   const handleImageChange = (file) => {
     if (!file) return;
@@ -34,9 +30,7 @@ const RemoveBackground = () => {
       const formData = new FormData();
       formData.append("image", input);
 
-      const { data } = await axios.post("/api/ai/remove-image-background", formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
-      });
+      const { data } = await api.post("/api/ai/remove-image-background", formData);
 
       if (!data.success) return toast.error(data.message);
       setContent(data.content);

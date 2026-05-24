@@ -1,31 +1,34 @@
-import { clerkClient } from "@clerk/express";
+import jwt from "jsonwebtoken";
 
-// AUTH MIDDLEWARE
-
-export const auth = async (req, res, next) => {
+export const auth = (req, res, next) => {
   try {
-    const { userId } = await req.auth();
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-    // GET USER
-    const user = await clerkClient.users.getUser(userId);
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Authorization token is required" });
+    }
 
-    // DEFAULT VALUES
-    req.userId = userId;
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not configured");
+    }
 
-    // REMOVE PREMIUM RESTRICTIONS
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.userId = decoded.id;
+    req.user = {
+      id: decoded.id,
+      name: decoded.name,
+      email: decoded.email,
+    };
     req.plan = "premium";
-
-    // OPTIONAL FREE USAGE
     req.free_usage = 0;
 
     next();
-
   } catch (error) {
-    console.log(error.message);
-
-    res.json({
+    res.status(401).json({
       success: false,
-      message: error.message,
+      message: error.name === "TokenExpiredError" ? "Session expired. Please log in again." : "Invalid token",
     });
   }
 };

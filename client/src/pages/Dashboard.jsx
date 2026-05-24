@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { Protect, useAuth } from "@clerk/clerk-react";
 import { Clock3, Gem, Sparkles, TrendingUp } from "lucide-react";
 import CreationItem from "../components/CreationItem";
-
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
+import api from "../lib/api";
 
 const StatCard = ({ label, value, icon: Icon, className = "bg-blue-600" }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -24,13 +21,10 @@ const StatCard = ({ label, value, icon: Icon, className = "bg-blue-600" }) => (
 const Dashboard = () => {
   const [creations, setCreations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { getToken } = useAuth();
 
   const getDashboardData = useCallback(async () => {
     try {
-      const { data } = await axios.get("/api/user/get-user-creations", {
-        headers: { Authorization: `Bearer ${await getToken()}` },
-      });
+      const { data } = await api.get("/api/user/get-user-creations");
 
       if (!data.success) return toast.error(data.message);
       setCreations(data.creations);
@@ -39,7 +33,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     getDashboardData();
@@ -68,11 +62,7 @@ const Dashboard = () => {
           <StatCard label="Total Creations" value={creations.length} icon={Sparkles} />
           <StatCard
             label="Active Plan"
-            value={
-              <Protect plan="premium" fallback="Free">
-                Premium
-              </Protect>
-            }
+            value="Premium"
             icon={Gem}
             className="bg-amber-500"
           />

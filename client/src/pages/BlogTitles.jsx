@@ -1,8 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/clerk-react";
 import { Hash } from "lucide-react";
+import api from "../lib/api";
 import {
   Field,
   MarkdownResult,
@@ -12,15 +11,12 @@ import {
 } from "../components/ToolWorkspace";
 import { copyToClipboard, inputClass, toolOptions } from "../utils/toolWorkspace";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
-
 const BlogTitles = () => {
   const [selectedCategory, setSelectedCategory] = useState("General");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
   const [copied, setCopied] = useState(false);
-  const { getToken } = useAuth();
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -28,10 +24,9 @@ const BlogTitles = () => {
 
     try {
       const prompt = `Generate 10 highly engaging, SEO-friendly blog titles for the topic "${input}" in the category "${selectedCategory}". Make titles modern, clickable, and creative.`;
-      const { data } = await axios.post(
+      const { data } = await api.post(
         "/api/ai/generate-blog-title",
-        { prompt },
-        { headers: { Authorization: `Bearer ${await getToken()}` } }
+        { prompt }
       );
 
       if (!data.success) return toast.error(data.message);

@@ -1,10 +1,4 @@
 import {
-  Protect,
-  useClerk,
-  useUser,
-} from "@clerk/clerk-react";
-
-import {
   Eraser,
   FileText,
   Hash,
@@ -20,7 +14,8 @@ import {
 } from "lucide-react";
 
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/auth";
 
 const navItems = [
   {
@@ -73,9 +68,15 @@ const navItems = [
 ];
 
 const Sidebar = ({ sidebar, setSidebar }) => {
-  const { user } = useUser();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
-  const { signOut, openUserProfile } = useClerk();
+  const initials = user?.name?.charAt(0)?.toUpperCase() || "U";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   return (
     <aside
@@ -113,19 +114,25 @@ const Sidebar = ({ sidebar, setSidebar }) => {
         <div className="flex flex-col items-center text-center">
 
           <div className="relative">
-            <img
-              src={user?.imageUrl}
-              alt="User avatar"
+            <div
               className="
                 w-14
                 h-14
                 rounded-2xl
-                object-cover
+                bg-blue-600
                 border-4
                 border-white
                 shadow-xl
+                flex
+                items-center
+                justify-center
+                text-xl
+                font-bold
+                text-white
               "
-            />
+            >
+              {initials}
+            </div>
 
             <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 shadow-lg">
               <Sparkles className="w-3.5 h-3.5 text-white" />
@@ -133,7 +140,7 @@ const Sidebar = ({ sidebar, setSidebar }) => {
           </div>
 
           <h2 className="mt-3 text-base font-semibold text-slate-800">
-            {user?.fullName}
+            {user?.name}
           </h2>
 
           <p className="text-sm text-slate-500">
@@ -251,7 +258,6 @@ const Sidebar = ({ sidebar, setSidebar }) => {
 
           {/* User Card */}
           <div
-            onClick={openUserProfile}
             className="
               flex
               items-center
@@ -260,23 +266,28 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               flex-1
             "
           >
-            <img
-              src={user?.imageUrl}
-              alt="user"
+            <div
               className="
                 w-10
                 h-10
                 rounded-xl
-                object-cover
+                bg-blue-600
                 border
                 border-white
                 shadow-md
+                flex
+                items-center
+                justify-center
+                font-semibold
+                text-white
               "
-            />
+            >
+              {initials}
+            </div>
 
             <div>
               <h3 className="text-sm font-semibold text-slate-800">
-                {user?.fullName}
+                {user?.name}
               </h3>
 
               <div className="
@@ -289,20 +300,14 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               ">
                 <Crown className="w-3.5 h-3.5 text-yellow-500" />
 
-                <Protect
-                  plan="premium"
-                  fallback="Free"
-                >
-                  Premium
-                </Protect>{" "}
-                Plan
+                Premium Plan
               </div>
             </div>
           </div>
 
           {/* Logout */}
           <button
-            onClick={signOut}
+            onClick={handleLogout}
             className="
               w-10
               h-10

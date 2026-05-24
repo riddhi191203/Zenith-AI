@@ -1,8 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/clerk-react";
 import { Edit, PenTool } from "lucide-react";
+import api from "../lib/api";
 import {
   Field,
   MarkdownResult,
@@ -12,14 +11,11 @@ import {
 } from "../components/ToolWorkspace";
 import { copyToClipboard, inputClass, toolOptions } from "../utils/toolWorkspace";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
-
 const WriteArticle = () => {
   const [selectedLength, setSelectedLength] = useState(toolOptions.articleLengths[0]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
-  const { getToken } = useAuth();
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -36,10 +32,9 @@ Requirements:
 - Use markdown formatting
 - Article length: ${selectedLength.desc}`;
 
-      const { data } = await axios.post(
+      const { data } = await api.post(
         "/api/ai/generate-article",
-        { prompt, length: selectedLength.length },
-        { headers: { Authorization: `Bearer ${await getToken()}` } }
+        { prompt, length: selectedLength.length }
       );
 
       if (!data.success) return toast.error(data.message);

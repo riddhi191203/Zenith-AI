@@ -1,8 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/clerk-react";
 import { FileText } from "lucide-react";
+import api from "../lib/api";
 import {
   Field,
   MarkdownResult,
@@ -12,14 +11,11 @@ import {
 } from "../components/ToolWorkspace";
 import { copyToClipboard } from "../utils/toolWorkspace";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
-
 const ReviewResume = () => {
   const [input, setInput] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState("");
-  const { getToken } = useAuth();
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -35,9 +31,7 @@ const ReviewResume = () => {
       const formData = new FormData();
       formData.append("resume", input);
 
-      const { data } = await axios.post("/api/ai/resume-review", formData, {
-        headers: { Authorization: `Bearer ${await getToken()}` },
-      });
+      const { data } = await api.post("/api/ai/resume-review", formData);
 
       if (!data.success) return toast.error(data.message);
       setContent(data.content);

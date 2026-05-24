@@ -14,20 +14,13 @@ import {
 
 import Sidebar from "../components/Sidebar";
 
-import {
-  SignIn,
-  useUser,
-} from "@clerk/clerk-react";
-
 const Layout = () => {
   const navigate = useNavigate();
 
   const [sidebar, setSidebar] =
     useState(false);
 
-  const { user } = useUser();
-
-  return user ? (
+  return (
     <div className="
       relative
       flex
@@ -173,59 +166,6 @@ const Layout = () => {
         ">
           <Outlet />
         </main>
-      </div>
-    </div>
-  ) : (
-    <div className="
-      relative
-      min-h-screen
-      flex
-      items-center
-      justify-center
-      overflow-hidden
-      bg-gradient-to-b
-      from-[#f8fbff]
-      via-[#eef5ff]
-      to-white
-      px-6
-    ">
-
-      {/* Background Blur */}
-      <div className="
-        absolute
-        top-[-120px]
-        left-[-120px]
-        w-[350px]
-        h-[350px]
-        bg-blue-300/20
-        rounded-full
-        blur-3xl
-      "></div>
-
-      <div className="
-        absolute
-        bottom-[-180px]
-        right-[-150px]
-        w-[420px]
-        h-[420px]
-        bg-slate-300/20
-        rounded-full
-        blur-3xl
-      "></div>
-
-      {/* Sign In Card */}
-      <div className="
-        relative
-        z-10
-        rounded-[36px]
-        border
-        border-white/50
-        bg-white/70
-        backdrop-blur-2xl
-        shadow-[0_8px_40px_rgb(0,0,0,0.08)]
-        p-4
-      ">
-        <SignIn />
       </div>
     </div>
   );

@@ -13,13 +13,64 @@ const AI = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
+const removeLocalFile = async (filePath) => {
+  if (!filePath) return;
+  await fs.promises.unlink(filePath).catch(() => {});
+};
+
+const uploadImageBuffer = async (buffer, folder) => {
+  const dataUri = `data:image/png;base64,${buffer.toString("base64")}`;
+  return cloudinary.uploader.upload(dataUri, { folder });
+};
+
+const callClipdrop = async ({ endpoint, files, fields = {} }) => {
+  if (!process.env.CLIPDROP_API_KEY) {
+    throw new Error("CLIPDROP_API_KEY is not configured");
+  }
+
+  const formData = new FormData();
+
+  for (const [fieldName, file] of Object.entries(files)) {
+    const buffer = await fs.promises.readFile(file.path);
+    const blob = new Blob([buffer], {
+      type: file.mimetype || "application/octet-stream",
+    });
+
+    formData.append(fieldName, blob, file.originalname);
+  }
+
+  for (const [fieldName, value] of Object.entries(fields)) {
+    formData.append(fieldName, value);
+  }
+
+  const response = await fetch(`https://clipdrop-api.co/${endpoint}`, {
+    method: "POST",
+    headers: {
+      "x-api-key": process.env.CLIPDROP_API_KEY,
+      accept: "image/png",
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    const errorBody = contentType.includes("application/json")
+      ? await response.json()
+      : { error: await response.text() };
+
+    throw new Error(errorBody.error || "ClipDrop request failed");
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+};
+
 // ==============================
 // GENERATE ARTICLE
 // ==============================
 
 export const generateArticle = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.userId;
 
     const { prompt, length = 1200 } = req.body;
 
@@ -70,7 +121,7 @@ export const generateArticle = async (req, res) => {
 
 export const generateBlogTitle = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.userId;
 
     const { prompt } = req.body;
 
@@ -121,7 +172,7 @@ export const generateBlogTitle = async (req, res) => {
 
 export const generateImage = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const userId = req.userId;
 
     const { prompt, publish = false } = req.body;
 
@@ -181,10 +232,10 @@ export const generateImage = async (req, res) => {
 // ==============================
 
 export const removeImageBackground = async (req, res) => {
-  try {
-    const { userId } = req.auth();
+  const image = req.file;
 
-    const image = req.file;
+  try {
+    const userId = req.userId;
 
     if (!image) {
       return res.json({
@@ -193,35 +244,26 @@ export const removeImageBackground = async (req, res) => {
       });
     }
 
-    // UPLOAD ORIGINAL IMAGE
-    const uploadResult = await cloudinary.uploader.upload(image.path);
-
-    // REMOVE BACKGROUND
-    const transformedUrl = cloudinary.url(uploadResult.public_id, {
-      transformation: [
-        {
-          effect: "background_removal",
-        },
-      ],
+    const outputBuffer = await callClipdrop({
+      endpoint: "remove-background/v1",
+      files: { image_file: image },
     });
 
-    // SAVE TO DATABASE
+    const uploadResult = await uploadImageBuffer(outputBuffer, "zenith-ai/background-removal");
+
     await sql`
       INSERT INTO creations (user_id, prompt, content, type)
       VALUES (
         ${userId},
         'Background removed',
-        ${transformedUrl},
+        ${uploadResult.secure_url},
         'image'
       )
     `;
 
-    // DELETE LOCAL FILE
-    fs.unlinkSync(image.path);
-
     res.json({
       success: true,
-      content: transformedUrl,
+      content: uploadResult.secure_url,
     });
 
   } catch (error) {
@@ -231,6 +273,8 @@ export const removeImageBackground = async (req, res) => {
       success: false,
       message: error.message,
     });
+  } finally {
+    await removeLocalFile(image?.path);
   }
 };
 
@@ -239,49 +283,53 @@ export const removeImageBackground = async (req, res) => {
 // ==============================
 
 export const removeImageObject = async (req, res) => {
+  const image = req.files?.image?.[0];
+  const mask = req.files?.mask?.[0];
+
   try {
-    const { userId } = req.auth();
+    const userId = req.userId;
+    const objectName = req.body.objectName?.trim();
 
-    const image = req.file;
-
-    const { object } = req.body;
-
-    if (!image) {
+    if (!image || !mask) {
       return res.json({
         success: false,
-        message: "No image uploaded",
+        message: "Image and object name are required",
       });
     }
 
-    // UPLOAD IMAGE
-    const uploadResult = await cloudinary.uploader.upload(image.path);
+    if (!objectName) {
+      return res.json({
+        success: false,
+        message: "Object name is required",
+      });
+    }
 
-    // REMOVE OBJECT
-    const transformedUrl = cloudinary.url(uploadResult.public_id, {
-      transformation: [
-        {
-          effect: `gen_remove:${object}`,
-        },
-      ],
+    const outputBuffer = await callClipdrop({
+      endpoint: "cleanup/v1",
+      files: {
+        image_file: image,
+        mask_file: mask,
+      },
+      fields: {
+        mode: "quality",
+      },
     });
 
-    // SAVE TO DATABASE
+    const uploadResult = await uploadImageBuffer(outputBuffer, "zenith-ai/object-removal");
+
     await sql`
       INSERT INTO creations (user_id, prompt, content, type)
       VALUES (
         ${userId},
-        ${`Removed ${object} from image`},
-        ${transformedUrl},
+        ${`Removed object: ${objectName}`},
+        ${uploadResult.secure_url},
         'image'
       )
     `;
 
-    // DELETE LOCAL FILE
-    fs.unlinkSync(image.path);
-
     res.json({
       success: true,
-      content: transformedUrl,
+      content: uploadResult.secure_url,
     });
 
   } catch (error) {
@@ -291,6 +339,11 @@ export const removeImageObject = async (req, res) => {
       success: false,
       message: error.message,
     });
+  } finally {
+    await Promise.all([
+      removeLocalFile(image?.path),
+      removeLocalFile(mask?.path),
+    ]);
   }
 };
 
@@ -299,10 +352,10 @@ export const removeImageObject = async (req, res) => {
 // ==============================
 
 export const resumeReview = async (req, res) => {
-  try {
-    const { userId } = req.auth();
+  const resume = req.file;
 
-    const resume = req.file;
+  try {
+    const userId = req.userId;
 
     if (!resume) {
       return res.json({
@@ -371,8 +424,6 @@ ${pdfData.text}
     `;
 
     // DELETE LOCAL FILE
-    fs.unlinkSync(resume.path);
-
     res.json({
       success: true,
       content,
@@ -385,5 +436,7 @@ ${pdfData.text}
       success: false,
       message: error.message,
     });
+  } finally {
+    await removeLocalFile(resume?.path);
   }
 };
